@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DERIV-READ — 옵션·선물 장세 판독기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D1014; --panel:#151A21; --panel2:#1A212B; --line:#242E3A;
+  --txt:#E8EDF2; --muted:#8B98A8; --dim:#5C6878;
+  --amber:#FFB454; --amber-deep:#E08A1E;
+  --red:#FF5C5C; --teal:#3DD6C3; --blue:#6CA8FF;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px}
+body{background:var(--bg);color:var(--txt);font-family:'IBM Plex Sans KR',sans-serif;min-height:100vh;padding-bottom:64px}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* ── header ── */
+header{border-bottom:1px solid var(--line);padding:20px 20px 16px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1.05rem;letter-spacing:.14em;color:var(--amber)}
+.brand::before{content:"◤ ";color:var(--amber-deep)}
+h1{font-size:.95rem;font-weight:500;color:var(--muted)}
+.hdr-note{margin-left:auto;font-size:.72rem;color:var(--dim);font-family:'IBM Plex Mono',monospace}
+
+.wrap{max-width:880px;margin:0 auto;padding:0 16px}
+
+/* ── tabs ── */
+.tabs{display:flex;gap:0;margin:20px 0 0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tab{flex:1;padding:12px 8px;text-align:center;background:var(--panel);color:var(--muted);font-weight:500;font-size:.9rem;cursor:pointer;border:none;font-family:inherit;transition:background .15s,color .15s}
+.tab.on{background:var(--panel2);color:var(--amber);box-shadow:inset 0 -2px 0 var(--amber)}
+.tab:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+
+/* ── form ── */
+.sect{margin-top:22px}
+.sect-label{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.18em;color:var(--dim);margin-bottom:10px;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.field{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.field label{font-size:.78rem;color:var(--muted)}
+.field .hint{font-size:.66rem;color:var(--dim)}
+input[type=number],select{background:var(--bg);border:1px solid var(--line);border-radius:7px;color:var(--txt);padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:.95rem;width:100%}
+input[type=number]:focus,select:focus{outline:2px solid var(--amber);outline-offset:0;border-color:var(--amber)}
+.chk{flex-direction:row;align-items:center;gap:10px}
+.chk input{width:18px;height:18px;accent-color:var(--amber)}
+.chk label{font-size:.85rem;color:var(--txt)}
+
+.runbar{margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.run{background:var(--amber);color:#13110B;border:none;border-radius:10px;padding:14px 28px;font-weight:700;font-size:1rem;font-family:inherit;cursor:pointer;letter-spacing:.04em}
+.run:hover{background:#FFC273}
+.run:focus-visible{outline:2px solid var(--txt);outline-offset:2px}
+.reset{background:none;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:13px 18px;font-family:inherit;font-size:.85rem;cursor:pointer}
+.reset:hover{color:var(--txt);border-color:var(--muted)}
+
+/* ── gauge (signature) ── */
+.verdict{display:none;margin-top:30px}
+.verdict.show{display:block;animation:rise .45s ease}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.gauge-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 20px 18px}
+.gauge-title{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--dim);margin-bottom:18px}
+.gauge{position:relative;height:54px;margin:0 6px}
+.gauge-track{position:absolute;top:24px;left:0;right:0;height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--red) 0%,#A85B45 32%,var(--dim) 50%,#3B9B92 68%,var(--teal) 100%)}
+.gauge-ticks{position:absolute;top:34px;left:0;right:0;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--dim)}
+.needle{position:absolute;top:2px;width:2px;height:30px;background:var(--txt);left:50%;transition:left .9s cubic-bezier(.2,.9,.3,1.1)}
+.needle::after{content:"";position:absolute;top:-7px;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--txt)}
+@media (prefers-reduced-motion:reduce){.needle{transition:none}.verdict.show{animation:none}}
+.gauge-verdict{text-align:center;margin-top:14px;font-size:1.3rem;font-weight:700}
+.gauge-sub{text-align:center;font-size:.78rem;color:var(--muted);margin-top:4px}
+
+/* ── result cards ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--dim);border-radius:10px;padding:14px 16px}
+.card.warn{border-left-color:var(--red)}
+.card.good{border-left-color:var(--teal)}
+.card.note{border-left-color:var(--amber)}
+.card h3{font-size:.72rem;letter-spacing:.12em;color:var(--dim);font-family:'IBM Plex Mono',monospace;margin-bottom:7px;text-transform:uppercase}
+.card .v{font-size:1.05rem;font-weight:700;margin-bottom:5px}
+.card p{font-size:.8rem;color:var(--muted);line-height:1.55}
+
+.report{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:14px}
+.report h3{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.2em;color:var(--amber);margin-bottom:12px}
+.report p{font-size:.92rem;line-height:1.85;color:var(--txt)}
+.report .caveat{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);font-size:.74rem;color:var(--dim);line-height:1.6}
+
+/* ── sources ── */
+details{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+summary{padding:13px 16px;cursor:pointer;font-size:.84rem;color:var(--muted);list-style:none}
+summary::before{content:"▸ ";color:var(--amber)}
+details[open] summary::before{content:"▾ "}
+.src-body{padding:0 16px 16px;font-size:.8rem;color:var(--muted);line-height:1.8}
+.src-body b{color:var(--txt);font-weight:500}
+.src-body .path{font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--blue)}
+
+.hide{display:none}
+footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-family:'IBM Plex Mono',monospace;letter-spacing:.08em}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="brand">DERIV-READ</span>
+  <h1>옵션·선물 장세 판독기 v1.1 AUTO</h1>
+  <span class="hdr-note" id="today"></span>
+</header>
+
+<div class="wrap">
+
+  <div id="autobadge" style="display:none;margin-top:14px;padding:9px 14px;border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:8px;background:var(--panel);font-size:.76rem;color:var(--muted)"><span style="color:var(--teal)">●</span> <b style="color:var(--txt)">AUTO</b> — <span id="autoinfo"></span> · 모든 값은 수동 수정 가능</div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab on" id="tabKR" role="tab" aria-selected="true" onclick="switchTab('KR')">🇰🇷 KOSPI200</button>
+    <button class="tab" id="tabUS" role="tab" aria-selected="false" onclick="switchTab('US')">🇺🇸 US (SPX/VIX)</button>
+  </div>
+
+  <!-- ════════ KR PANEL ════════ -->
+  <div id="panelKR">
+    <div class="sect">
+      <div class="sect-label">// 입력 — KRX 정보데이터시스템 기준 일간 데이터</div>
+      <div class="grid">
+        <div class="field">
+          <label for="krVk">VKOSPI 현재값</label>
+          <input type="number" id="krVk" step="0.1" placeholder="예: 28.5">
+          <span class="hint">KRX → 파생상품지수 / 포털 검색</span>
+        </div>
+        <div class="field">
+          <label for="krVkChg">VKOSPI 전일 대비 (%)</label>
+          <input type="number" id="krVkChg" step="0.1" placeholder="예: +12.0 / -5.0">
+          <span class="hint">급등 = 보험료 급등 = 공포 가속</span>
+        </div>
+        <div class="field">
+          <label for="krPC">풋콜 미결제약정 비율 (P/C OI)</label>
+          <input type="number" id="krPC" step="0.01" placeholder="예: 1.15">
+          <span class="hint">풋OI ÷ 콜OI. 통상 0.85~1.15 부근</span>
+        </div>
+        <div class="field">
+          <label for="krFrOpt">외국인 옵션 순매수 방향</label>
+          <select id="krFrOpt">
+            <option value="neutral">중립 · 혼조</option>
+            <option value="put">풋 순매수 우위 (보험 매수)</option>
+            <option value="call">콜 순매수 우위 (상방 베팅)</option>
+            <option value="putsell">풋 순매도 우위 (보험 판매)</option>
+          </select>
+          <span class="hint">KRX → 파생 투자자별 거래실적</span>
+        </div>
+        <div class="field">
+          <label for="krFrSpot">외국인 현물 수급</label>
+          <select id="krFrSpot">
+            <option value="neutral">중립</option>
+            <option value="sell">순매도 지속</option>
+            <option value="buy">순매수 전환/지속</option>
+          </select>
+          <span class="hint">정합성 매트릭스 판정용</span>
+        </div>
+        <div class="field">
+          <label for="krExp">가장 가까운 만기까지 영업일</label>
+          <input type="number" id="krExp" step="1" placeholder="예: 2">
+          <span class="hint">월물(둘째 목) · 위클리 중 가까운 것</span>
+        </div>
+        <div class="field chk">
+          <input type="checkbox" id="krQuad">
+          <label for="krQuad">동시만기(네 마녀) 주간이다</label>
+        </div>
+        <div class="field">
+          <label for="krIdx">전일 KOSPI200 등락률 (%)</label>
+          <input type="number" id="krIdx" step="0.1" placeholder="예: -2.3">
+          <span class="hint">VKOSPI 변화와 교차 해석</span>
+        </div>
+      </div>
+      <div class="runbar">
+        <button class="run" onclick="readKR()">판독 실행</button>
+        <button class="reset" onclick="resetKR()">초기화</button>
+      </div>
+    </div>
+
+    <div class="verdict" id="vKR">
+      <div class="gauge-card">
+        <div class="gauge-title">MARKET REGIME — 딜러 감마 체질 추정</div>
+        <div class="gauge">
+          <div class="gauge-track"></div>
+          <div class="needle" id="needleKR"></div>
+          <div class="gauge-ticks"><span>◀ 증폭기 (숏감마)</span><span>중립</span><span>흡수기 (롱감마) ▶</span></div>
+        </div>
+        <div class="gauge-verdict" id="gvKR"></div>
+        <div class="gauge-sub" id="gsKR"></div>
+      </div>
+      <div class="cards" id="cardsKR"></div>
+      <div class="report"><h3>// 오늘의 판독문</h3><p id="repKR"></p>
+        <p class="caveat">⚠ 국내는 공식 GEX 데이터가 없어 감마 체질은 P/C 적재·IV 거동·만기 근접도로 <b>추정</b>한 것이다. 이 판독은 징후탐지 레이어의 입력이지 매매 트리거가 아니며, 헤게모니 스프레드·수급 레이어와 교차 확인 후 사용한다.</p>
+      </div>
+    </div>
+
+    <details>
+      <summary>데이터 출처 — 어디서 숫자를 가져오나</summary>
+      <div class="src-body">
+        <b>VKOSPI</b> · <span class="path">data.krx.co.kr → 지수 → 파생상품지수</span> 또는 포털 "VKOSPI" 검색<br>
+        <b>풋콜 미결제약정</b> · <span class="path">KRX → 파생상품 → 미결제약정 추이</span> / 증권사 HTS 파생 화면<br>
+        <b>투자자별 옵션 매매</b> · <span class="path">KRX → 파생상품 → 투자자별 거래실적 (콜/풋 구분)</span><br>
+        <b>만기 캘린더</b> · 월물: 결제월 둘째 목요일 / 위클리: 매주 월·목 만기 / 동시만기: 3·6·9·12월
+      </div>
+    </details>
+  </div>
+
+  <!-- ════════ US PANEL ════════ -->
+  <div id="panelUS" class="hide">
+    <div class="sect">
+      <div class="sect-label">// 입력 — CBOE 기준 (장 시작 전 한국장 체질 예보용)</div>
+      <div class="grid">
+        <div class="field">
+          <label for="usVix">VIX 현재값</label>
+          <input type="number" id="usVix" step="0.1" placeholder="예: 22.4">
+          <span class="hint">SPX 30일 내재변동성</span>
+        </div>
+        <div class="field">
+          <label for="usVix9">VIX9D (단기 9일물)</label>
+          <input type="number" id="usVix9" step="0.1" placeholder="예: 24.1 (없으면 비움)">
+          <span class="hint">VIX9D &gt; VIX = 백워데이션 = 즉각적 스트레스</span>
+        </div>
+        <div class="field">
+          <label for="usPC">CBOE Equity Put/Call</label>
+          <input type="number" id="usPC" step="0.01" placeholder="예: 0.78">
+          <span class="hint">통상 0.5~0.8. 1.0+ = 공포 극단권</span>
+        </div>
+        <div class="field">
+          <label for="usGex">GEX (감마 익스포저) 부호</label>
+          <select id="usGex">
+            <option value="unknown">모름 / 미확인</option>
+            <option value="pos">양(+) — 딜러 롱감마</option>
+            <option value="neg">음(−) — 딜러 숏감마</option>
+          </select>
+          <span class="hint">확인 시 체질 판정에 직결 반영</span>
+        </div>
+        <div class="field">
+          <label for="usSpx">전일 SPX 등락률 (%)</label>
+          <input type="number" id="usSpx" step="0.1" placeholder="예: -1.8">
+        </div>
+      </div>
+      <div class="runbar">
+        <button class="run" onclick="readUS()">판독 실행</button>
+        <button class="reset" onclick="resetUS()">초기화</button>
+      </div>
+    </div>
+
+    <div class="verdict" id="vUS">
+      <div class="gauge-card">
+        <div class="gauge-title">MARKET REGIME — 딜러 감마 체질</div>
+        <div class="gauge">
+          <div class="gauge-track"></div>
+          <div class="needle" id="needleUS"></div>
+          <div class="gauge-ticks"><span>◀ 증폭기 (숏감마)</span><span>중립</span><span>흡수기 (롱감마) ▶</span></div>
+        </div>
+        <div class="gauge-verdict" id="gvUS"></div>
+        <div class="gauge-sub" id="gsUS"></div>
+      </div>
+      <div class="cards" id="cardsUS"></div>
+      <div class="report"><h3>// 오늘의 판독문 + 한국장 체질 예보</h3><p id="repUS"></p>
+        <p class="caveat">⚠ GEX 미입력 시 기간구조·P/C로 체질을 추정한다. 미국 야간 장세의 한국 전이는 갭·외국인 선물 경로로 나타나며, 전이 강도는 별도 검증 과제다.</p>
+      </div>
+    </div>
+
+    <details>
+      <summary>데이터 출처 — 어디서 숫자를 가져오나</summary>
+      <div class="src-body">
+        <b>VIX · VIX9D</b> · <span class="path">cboe.com</span> 또는 포털 "VIX", "VIX9D" 검색<br>
+        <b>Equity Put/Call</b> · <span class="path">cboe.com → US Options Market Statistics</span><br>
+        <b>GEX</b> · 무료: squeezemetrics 등 추정치 / 형님의 US 옵션 대시보드 감마 지표<br>
+        <b>활용 시점</b> · 한국장 시작 전 아침 루틴 — "오늘의 체질 예보"
+      </div>
+    </details>
+  </div>
+
+  <footer>DERIV-READ v1.0 · 차트 기술적 지표 비사용 · 포지셔닝 회계 기반 판독 · 입력값은 저장되지 않음</footer>
+</div>
+
+<script>
+document.getElementById('today').textContent = new Date().toISOString().slice(0,10);
+
+function switchTab(t){
+  const kr = t==='KR';
+  document.getElementById('panelKR').classList.toggle('hide',!kr);
+  document.getElementById('panelUS').classList.toggle('hide',kr);
+  document.getElementById('tabKR').classList.toggle('on',kr);
+  document.getElementById('tabUS').classList.toggle('on',!kr);
+  document.getElementById('tabKR').setAttribute('aria-selected',kr);
+  document.getElementById('tabUS').setAttribute('aria-selected',!kr);
+}
+
+function num(id){const v=document.getElementById(id).value;return v===''?null:parseFloat(v);}
+function card(cls,title,val,desc){return `<div class="card ${cls}"><h3>${title}</h3><div class="v">${val}</div><p>${desc}</p></div>`;}
+
+function fearStage(v,bands){ // bands: [calm,normal,fear,panic]
+  if(v==null) return null;
+  if(v<bands[0]) return {k:'calm',name:'안일',color:'note',desc:'보험이 헐값 = 시장이 위험을 잊은 상태. 충격에 가장 취약한 체질. 숏감마 적재 시 작은 악재도 증폭될 수 있다.'};
+  if(v<bands[1]) return {k:'norm',name:'평시',color:'',desc:'기대 변동성이 통상 범위. 파생발 신호 강도 낮음.'};
+  if(v<bands[2]) return {k:'fear',name:'공포',color:'warn',desc:'헤지 수요 급증 구간. 보험료가 비싸지는 중 — 지금 풋을 사는 것은 태풍 상륙 후 보험 가입이다.'};
+  if(v<bands[3]) return {k:'panic',name:'패닉',color:'warn',desc:'극단 공포. 팔 사람은 이미 판 상태에 근접. 역발상 관찰 구간 진입 — 단, 바닥 확정 신호는 아니다.'};
+  return {k:'extreme',name:'역사적 극단',color:'good',desc:'산출 역사상 극단권 (VKOSPI 90 사건 영역). 공포의 가격이 천장 — 펀더멘털 무손상 확인 시 역발상 매수의 보조 확인 신호.'};
+}
+
+/* ═══ KR ═══ */
+function readKR(){
+  const vk=num('krVk'), vkChg=num('krVkChg'), pc=num('krPC'),
+        frOpt=document.getElementById('krFrOpt').value,
+        frSpot=document.getElementById('krFrSpot').value,
+        exp=num('krExp'), quad=document.getElementById('krQuad').checked,
+        idx=num('krIdx');
+
+  // 감마 체질 점수: 음수=증폭기, 양수=흡수기
+  let g=0, why=[];
+  if(pc!=null){
+    if(pc>=1.3){g-=2;why.push('P/C 미결제 '+pc.toFixed(2)+' — 풋 대량 적재(딜러 풋 매도 누적 추정)');}
+    else if(pc>=1.15){g-=1;why.push('P/C 미결제 '+pc.toFixed(2)+' — 풋 적재 우위');}
+    else if(pc<=0.85){g+=1;why.push('P/C 미결제 '+pc.toFixed(2)+' — 풋 적재 가벼움');}
+  }
+  if(vkChg!=null){
+    if(vkChg>=10){g-=2;why.push('VKOSPI 급등 '+vkChg+'% — 보험 사재기 가속');}
+    else if(vkChg>=5){g-=1;why.push('VKOSPI 상승 '+vkChg+'%');}
+    else if(vkChg<=-5){g+=1;why.push('VKOSPI 하락 '+vkChg+'% — 공포 해소·IV 수축');}
+  }
+  if(frOpt==='put'){g-=2;why.push('외국인 풋 순매수 — 딜러 숏감마 압력');}
+  if(frOpt==='putsell'){g+=1;why.push('외국인 풋 매도 — 딜러에 롱감마 공급');}
+  if(exp!=null && exp<=3){g-=1;why.push('만기 D-'+exp+' — ATM 감마 폭발 구간');}
+  if(quad){g-=2;why.push('동시만기 주간 — 롤오버·차익청산 중첩');}
+
+  const regime = g<=-3?{name:'증폭기 환경 (숏감마 추정)',col:'var(--red)',pos:12+Math.max(0,(g+6))*4,
+                  sub:'딜러 강제 매매가 추세 방향으로 작동 — 하락은 더 깊게, 반등도 더 가파르게'}
+              : g>=2?{name:'흡수기 환경 (롱감마 추정)',col:'var(--teal)',pos:78+Math.min(2,g-2)*5,
+                  sub:'딜러가 줄다리기 심판 — 악재에도 끈적한 박스 고착 가능성'}
+              : {name:'중립 · 혼조',col:'var(--txt)',pos:50+g*5,
+                  sub:'파생발 체질 신호 약함 — 펀더멘털·수급 레이어가 주도'};
+
+  // 공포 단계 (VKOSPI bands)
+  const fs=fearStage(vk,[15,25,35,50]);
+
+  // 정합성 매트릭스
+  let coh=null;
+  if(frSpot==='sell'&&frOpt==='put') coh={v:'진성 이탈 경계',c:'warn',d:'현물 매도 + 풋 매수 = 하락 이중 베팅. 외국인 매도를 일시 리밸런싱으로 보기 어려운 조합.'};
+  else if(frSpot==='sell'&&frOpt==='call') coh={v:'리밸런싱 가능성',c:'good',d:'현물은 팔되 콜을 산다 = 복귀 여지를 남긴 매도. 진성 이탈과 구분되는 신호.'};
+  else if(frSpot==='sell'&&frOpt==='putsell') coh={v:'질서 있는 축소',c:'',d:'매도하면서도 폭락엔 걸지 않는다(풋 매도). 패닉성 이탈 아님.'};
+  else if(frSpot==='buy'&&frOpt==='put') coh={v:'조심스러운 복귀',c:'',d:'사되 보험을 든다. 복귀 초기의 전형적 형태.'};
+  else if(frSpot==='buy'&&frOpt==='call') coh={v:'공세적 복귀',c:'good',d:'현물 매수 + 콜 매수 = 상방 이중 베팅.'};
+
+  // 카드 렌더
+  let cards='';
+  if(fs) cards+=card(fs.color,'공포 단계 — VKOSPI '+vk,fs.name,fs.desc);
+  if(coh) cards+=card(coh.c,'외국인 현물-옵션 정합성',coh.v,coh.d);
+  if(exp!=null&&exp<=1||quad) cards+=card('note','노이즈 분류 경고','만기 이벤트 근접','만기 당일 ±1일·동시만기의 급변동은 신호가 아니라 노이즈로 우선 분류. 펀더멘털 신호로 오인 금지.');
+  if(fs&&(fs.k==='panic'||fs.k==='extreme')&&vkChg!=null&&vkChg>0) cards+=card('good','역발상 관찰 신호','공포 극단 + 가속 중','보험료가 천장권. 헤게모니 스프레드 무손상 종목에 한해 트리거매매 단계의 보조 확인으로 사용 가능. 단독 사용 금지.');
+  if(fs&&fs.k==='calm'&&g<=-2) cards+=card('warn','취약 구조 경고','안일 + 숏감마 적재','보험은 헐값인데 증폭기는 장전된 상태. 작은 악재가 큰 낙폭으로 번질 수 있는 조합 — 현금 버퍼·분할 규칙 점검.');
+  document.getElementById('cardsKR').innerHTML=cards||card('','판정 보류','입력 부족','VKOSPI와 P/C 비율만이라도 입력하면 기본 판독이 가능하다.');
+
+  // 판독문
+  let rep='';
+  rep+=`체질: <b style="color:${regime.col}">${regime.name}</b>. ${regime.sub}. `;
+  if(why.length) rep+='근거 — '+why.join(' · ')+'. ';
+  if(fs) rep+=`공포 단계는 <b>${fs.name}</b>(VKOSPI ${vk}). `;
+  if(idx!=null&&vkChg!=null){
+    if(idx<0&&vkChg<0) rep+='지수 하락에도 VKOSPI가 내렸다 — 시장이 이 하락을 두려워하지 않는다는 뜻으로, 질서 있는 조정 쪽 해석. ';
+    if(idx>0&&vkChg>5) rep+='지수 상승에도 VKOSPI가 뛰었다 — 반등을 못 믿는 시장. 보험을 들고 오르는 불안한 랠리. ';
+  }
+  if(coh) rep+=`외국인 행동 판정: <b>${coh.v}</b>.`;
+  document.getElementById('repKR').innerHTML=rep;
+
+  document.getElementById('gvKR').textContent=regime.name;
+  document.getElementById('gvKR').style.color=regime.col;
+  document.getElementById('gsKR').textContent=regime.sub;
+  document.getElementById('vKR').classList.add('show');
+  requestAnimationFrame(()=>{document.getElementById('needleKR').style.left=Math.max(4,Math.min(96,regime.pos))+'%';});
+  document.getElementById('vKR').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetKR(){['krVk','krVkChg','krPC','krExp','krIdx'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('krFrOpt').value='neutral';document.getElementById('krFrSpot').value='neutral';
+  document.getElementById('krQuad').checked=false;document.getElementById('vKR').classList.remove('show');}
+
+/* ═══ US ═══ */
+function readUS(){
+  const vix=num('usVix'), v9=num('usVix9'), pc=num('usPC'),
+        gex=document.getElementById('usGex').value, spx=num('usSpx');
+
+  let g=0, why=[];
+  let backw=false;
+  if(v9!=null&&vix!=null){
+    if(v9>vix){backw=true;g-=2;why.push('VIX9D('+v9+') > VIX('+vix+') — 백워데이션, 즉각적 스트레스');}
+    else {g+=1;why.push('기간구조 콘탱고 — 단기 공포 부재');}
+  }
+  if(pc!=null){
+    if(pc>=1.0){g-=1;why.push('Equity P/C '+pc.toFixed(2)+' — 풋 수요 극단권');}
+    else if(pc<=0.55){g+=0;why.push('Equity P/C '+pc.toFixed(2)+' — 콜 투기 과열권(고점 경계)');}
+  }
+  if(gex==='neg'){g=-4;why.unshift('GEX 음수 확인 — 딜러 숏감마 확정');}
+  if(gex==='pos'){g=4;why.unshift('GEX 양수 확인 — 딜러 롱감마 확정');}
+
+  const regime = g<=-2?{name:'증폭기 환경 (숏감마)',col:'var(--red)',pos:14,
+                  sub:'추세 폭주 체질 — 야간 급락 시 한국장 갭·외국인 선물 매도 전이 경계'}
+              : g>=2?{name:'흡수기 환경 (롱감마)',col:'var(--teal)',pos:84,
+                  sub:'박스 고착 체질 — 악재 흡수력 있음, 끈적한 장세'}
+              : {name:'중립 · 혼조',col:'var(--txt)',pos:50+g*6,sub:'체질 신호 약함'};
+
+  const fs=fearStage(vix,[13,20,30,45]);
+
+  let cards='';
+  if(fs) cards+=card(fs.color,'공포 단계 — VIX '+vix,fs.name,fs.desc.replace('VKOSPI 90 사건 영역','2020·2008급 영역'));
+  if(backw) cards+=card('warn','기간구조','백워데이션','단기 공포가 장기를 역전. 스트레스 국면 한복판 — 백워데이션 해소 과정이 종종 바닥 형성과 동행한다.');
+  if(pc!=null&&pc>=1.0) cards+=card('good','역발상 관찰','P/C 극단','풋 수요 극단 = 공포 절정 후보. 스무딩(이동평균)으로 재확인 권장.');
+  if(pc!=null&&pc<=0.55) cards+=card('note','과열 경계','콜 투기 쏠림','옵션시장이 상방 복권에 쏠림 — 고점권 경계 신호.');
+  document.getElementById('cardsUS').innerHTML=cards||card('','판정 보류','입력 부족','VIX만이라도 입력하면 기본 판독이 가능하다.');
+
+  let rep=`체질: <b style="color:${regime.col}">${regime.name}</b>. ${regime.sub}. `;
+  if(why.length) rep+='근거 — '+why.join(' · ')+'. ';
+  if(fs) rep+=`공포 단계 <b>${fs.name}</b>(VIX ${vix}). `;
+  rep+='<br><br><b>한국장 예보:</b> ';
+  if(g<=-2&&spx!=null&&spx<-1) rep+='증폭기 환경에서의 야간 급락 — 한국 갭하락 + 외국인 선물 매도 전이 가능성 높음. 장 초반 추격 매매 자제, 위클리 만기 근접 여부 교차 확인.';
+  else if(g>=2) rep+='흡수기 환경 — 미국발 충격이 있어도 전이 강도는 제한적일 가능성. 한국 자체 수급(외국인 현물)이 주도 변수.';
+  else rep+='체질 신호가 약하므로 한국장은 자체 변수(외국인 수급·KRX 파생 데이터)로 판독할 것.';
+  document.getElementById('repUS').innerHTML=rep;
+
+  document.getElementById('gvUS').textContent=regime.name;
+  document.getElementById('gvUS').style.color=regime.col;
+  document.getElementById('gsUS').textContent=regime.sub;
+  document.getElementById('vUS').classList.add('show');
+  requestAnimationFrame(()=>{document.getElementById('needleUS').style.left=Math.max(4,Math.min(96,regime.pos))+'%';});
+  document.getElementById('vUS').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetUS(){['usVix','usVix9','usPC','usSpx'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('usGex').value='unknown';document.getElementById('vUS').classList.remove('show');}
+
+/* ═══ 만기 캘린더 자동 계산 (순수 달력 로직 — 항상 자동) ═══ */
+function nthThursday(y,m,n){ // m: 0-11
+  const d=new Date(y,m,1); let cnt=0;
+  for(let i=1;i<=31;i++){const t=new Date(y,m,i); if(t.getMonth()!==m)break;
+    if(t.getDay()===4){cnt++; if(cnt===n)return t;}} return null;
+}
+function bizDaysTo(target){ // 주말 제외 영업일 (공휴일 미반영 근사)
+  let n=0, d=new Date(); d.setHours(0,0,0,0);
+  const t=new Date(target); t.setHours(0,0,0,0);
+  while(d<t){ d.setDate(d.getDate()+1); const w=d.getDay(); if(w!==0&&w!==6)n++; }
+  return n;
+}
+function autoExpiry(){
+  const now=new Date(); now.setHours(0,0,0,0);
+  // 월물: 이번달/다음달 둘째 목요일 중 미래의 것
+  let mExp=nthThursday(now.getFullYear(),now.getMonth(),2);
+  if(mExp<now) mExp=nthThursday(now.getFullYear(),now.getMonth()+1===12?now.getFullYear()+1:now.getFullYear(),(now.getMonth()+1)%12,2)||nthThursday(now.getFullYear(),now.getMonth()+1,2);
+  // 위클리: 다음 월요일·목요일 중 가까운 것
+  const cands=[];
+  for(let i=0;i<=7;i++){const t=new Date(now); t.setDate(t.getDate()+i);
+    if((t.getDay()===1||t.getDay()===4)&&t>now)cands.push(t);}
+  let nearest=cands[0]; if(mExp&&mExp<nearest)nearest=mExp;
+  const days=bizDaysTo(nearest);
+  document.getElementById('krExp').value=days;
+  // 동시만기: 3·6·9·12월 둘째 목요일이 7일 이내
+  const qm=[2,5,8,11];
+  const qExp=nthThursday(now.getFullYear(),now.getMonth(),2);
+  const isQuad=qm.includes(now.getMonth())&&qExp&&qExp>=now&&((qExp-now)/864e5)<=7;
+  document.getElementById('krQuad').checked=isQuad;
+  return {days,isQuad};
+}
+
+/* ═══ AUTO 모드: deriv_data.json 로드 → 자동 채움 → 자동 판독 ═══ */
+async function autoLoad(){
+  autoExpiry(); // 달력은 데이터 파일 없이도 항상 자동
+  try{
+    const r=await fetch('deriv_data.json?t='+Date.now());
+    if(!r.ok) return; // 파일 없으면 조용히 수동 모드
+    const d=await r.json();
+    const set=(id,v)=>{if(v!=null&&!isNaN(v))document.getElementById(id).value=v;};
+    set('krVk',d.vkospi); set('krVkChg',d.vkospi_chg_pct); set('krIdx',d.k200_chg_pct);
+    set('krPC',d.kr_pc_oi);
+    set('usVix',d.vix); set('usVix9',d.vix9d); set('usSpx',d.spx_chg_pct); set('usPC',d.us_equity_pc);
+    if(d.kr_foreign_opt) document.getElementById('krFrOpt').value=d.kr_foreign_opt;
+    document.getElementById('autoinfo').textContent='데이터 기준 '+(d.updated_kst||'?')+
+      (d.errors&&d.errors.length?' (일부 수집 실패: '+d.errors.join(', ')+')':'');
+    document.getElementById('autobadge').style.display='block';
+    if(d.vix!=null) readUS();
+    if(d.vkospi!=null) readKR();
+  }catch(e){/* 수동 모드 유지 */}
+}
+autoLoad();
+</script>
+</body>
+</html>
