@@ -1,0 +1,29 @@
+name: deriv-data
+# DERIV-READ 데이터 파이프라인: 일 2회 수집 후 deriv_data.json 커밋
+# 07:20 KST = 미국 마감 반영 (한국 장전 예보용) / 16:30 KST = KRX 마감 후
+on:
+  schedule:
+    - cron: '20 22 * * 0-4'   # 22:20 UTC = 07:20 KST (월~금 아침)
+    - cron: '30 7 * * 1-5'    # 07:30 UTC = 16:30 KST (월~금 장후)
+  workflow_dispatch:           # 수동 실행 버튼
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install yfinance requests beautifulsoup4
+      - run: python fetch_deriv_data.py
+      - name: commit json
+        run: |
+          git config user.name "deriv-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add deriv_data.json
+          git diff --cached --quiet || git commit -m "data: $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git push
