@@ -45,6 +45,14 @@ input[type=number]:focus,select:focus{outline:2px solid var(--amber);outline-off
 .chk{flex-direction:row;align-items:center;gap:10px}
 .chk input{width:18px;height:18px;accent-color:var(--amber)}
 .chk label{font-size:.85rem;color:var(--txt)}
+details.why{margin-top:4px;background:transparent;border:none;border-radius:0}
+details.why summary{padding:2px 0;font-size:.7rem;color:var(--blue);cursor:pointer;list-style:none}
+details.why summary::before{content:"ⓘ ";color:var(--blue)}
+details.why[open] summary::before{content:"▾ "}
+details.why p{font-size:.74rem;color:var(--muted);line-height:1.7;margin-top:5px;padding-left:9px;border-left:2px solid var(--line)}
+details.why b{color:var(--amber);font-weight:500}
+.gauge-legend{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line);font-size:.74rem;color:var(--muted);line-height:1.75}
+.gauge-legend b{color:var(--txt);font-weight:500}
 
 .runbar{margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .run{background:var(--amber);color:#13110B;border:none;border-radius:10px;padding:14px 28px;font-weight:700;font-size:1rem;font-family:inherit;cursor:pointer;letter-spacing:.04em}
@@ -101,7 +109,7 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
 
 <header>
   <span class="brand">DERIV-READ</span>
-  <h1>옵션·선물 장세 판독기 v1.1 AUTO</h1>
+  <h1>옵션·선물 장세 판독기 v1.2 AUTO</h1>
   <span class="hdr-note" id="today"></span>
 </header>
 
@@ -123,16 +131,19 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
           <label for="krVk">VKOSPI 현재값</label>
           <input type="number" id="krVk" step="0.1" placeholder="예: 28.5">
           <span class="hint">KRX → 파생상품지수 / 포털 검색</span>
+          <details class="why"><summary>이게 뭔가</summary><p>시장 전체의 <b>보험료 평균</b>이다. KOSPI200 옵션(=쿠폰)들의 가격이 일제히 비싸지면 오른다. 옵션값이 비싸진다 = 시장이 "곧 큰 움직임이 온다"고 집단적으로 베팅 중이라는 뜻. 그래서 공포지수라 부른다. 6월 8일 폭락 때 사상 처음 90을 찍은 그 지수. 대략 15 아래면 안일(보험이 헐값), 25 넘으면 공포, 35 넘으면 패닉권.</p></details>
         </div>
         <div class="field">
           <label for="krVkChg">VKOSPI 전일 대비 (%)</label>
           <input type="number" id="krVkChg" step="0.1" placeholder="예: +12.0 / -5.0">
           <span class="hint">급등 = 보험료 급등 = 공포 가속</span>
+          <details class="why"><summary>이게 뭔가</summary><p>보험료가 <b>오늘 하루에 얼마나 뛰었나</b>. 레벨(절대값)보다 변화 속도가 더 급한 신호일 때가 많다. +10% 넘게 뛰면 누군가 보험을 사재기 중 — 딜러는 그만큼 보험을 팔아주며 부채질꾼(숏감마) 쪽으로 밀린다. 반대로 크게 빠지면 공포가 식는 중.</p></details>
         </div>
         <div class="field">
           <label for="krPC">풋콜 미결제약정 비율 (P/C OI)</label>
           <input type="number" id="krPC" step="0.01" placeholder="예: 1.15">
           <span class="hint">풋OI ÷ 콜OI. 통상 0.85~1.15 부근</span>
+          <details class="why"><summary>이게 뭔가</summary><p>미결제약정(OI)은 <b>아직 청산 안 된 계약 잔량</b> — 포지션의 회계 장부다. 풋(하락 보험) 잔량을 콜(상승 복권) 잔량으로 나눈 값. 1보다 한참 크면 하락 보험이 잔뜩 쌓여 있다는 뜻이고, 그 보험을 팔아준 게 딜러이므로 <b>딜러 진영이 부채질꾼(숏감마)으로 장전</b>되어 있을 가능성이 올라간다.</p></details>
         </div>
         <div class="field">
           <label for="krFrOpt">외국인 옵션 순매수 방향</label>
@@ -143,6 +154,7 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
             <option value="putsell">풋 순매도 우위 (보험 판매)</option>
           </select>
           <span class="hint">KRX → 파생 투자자별 거래실적</span>
+          <details class="why"><summary>이게 뭔가</summary><p>큰손(외국인)이 옵션시장에서 <b>보험을 사는 중인가, 복권을 사는 중인가</b>. 현물 매매는 "무엇을 했는가"만 보여주지만 옵션 포지션은 "무엇을 두려워하는가"를 보여준다. 풋을 사면 하락을 대비/베팅 중, 콜을 사면 상방을 열어두는 중, 풋을 팔면 "폭락은 없다"에 거는 중.</p></details>
         </div>
         <div class="field">
           <label for="krFrSpot">외국인 현물 수급</label>
@@ -152,11 +164,13 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
             <option value="buy">순매수 전환/지속</option>
           </select>
           <span class="hint">정합성 매트릭스 판정용</span>
+          <details class="why"><summary>이게 뭔가</summary><p>위의 옵션 방향과 <b>교차 대조</b>하기 위한 입력. 같은 "현물 순매도"라도 풋을 함께 사고 있으면 진성 이탈 경계, 콜을 사고 있으면 돌아올 생각이 있는 리밸런싱일 수 있다. 21거래일 연속 순매도 같은 국면에서 "탈출이냐 조정이냐"를 가르는 재료.</p></details>
         </div>
         <div class="field">
           <label for="krExp">가장 가까운 만기까지 영업일</label>
           <input type="number" id="krExp" step="1" placeholder="예: 2">
-          <span class="hint">월물(둘째 목) · 위클리 중 가까운 것</span>
+          <span class="hint">자동 계산됨 (월물·위클리 중 가까운 것)</span>
+          <details class="why"><summary>이게 뭔가</summary><p>쿠폰 유효기간 마감일까지 남은 날. <b>만기 임박 + ATM = 감마 폭발 구간</b> — 개표 마감 직전의 초경합지라서 지수가 조금만 움직여도 델타가 휙휙 뒤집히고, 딜러의 강제 매매(헤지 재조정)가 격렬해진다. 한국은 위클리옵션 때문에 이 구간이 매주 돌아온다.</p></details>
         </div>
         <div class="field chk">
           <input type="checkbox" id="krQuad">
@@ -166,6 +180,7 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
           <label for="krIdx">전일 KOSPI200 등락률 (%)</label>
           <input type="number" id="krIdx" step="0.1" placeholder="예: -2.3">
           <span class="hint">VKOSPI 변화와 교차 해석</span>
+          <details class="why"><summary>이게 뭔가</summary><p>지수 움직임과 보험료 움직임을 <b>같이 놓고 읽기</b> 위한 입력. 지수가 빠졌는데 보험료(VKOSPI)도 같이 내렸다? 시장이 이 하락을 안 무서워한다는 뜻 = 질서 있는 조정 쪽. 지수가 올랐는데 보험료가 뛰었다? 반등을 못 믿고 보험 들면서 오르는 불안한 랠리.</p></details>
         </div>
       </div>
       <div class="runbar">
@@ -182,6 +197,7 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
           <div class="needle" id="needleKR"></div>
           <div class="gauge-ticks"><span>◀ 증폭기 (숏감마)</span><span>중립</span><span>흡수기 (롱감마) ▶</span></div>
         </div>
+        <div class="gauge-legend"><b>증폭기(숏감마)</b> — 딜러가 부채질꾼: 떨어지면 강제로 팔고 오르면 강제로 사서 추세에 기름을 붓는 환경. 장중 급등락이 펀더멘털이 아니라 기계가 만든 것일 수 있다.<br><b>흡수기(롱감마)</b> — 딜러가 줄다리기 심판: 한쪽으로 쏠리면 반대로 당겨서 지수를 박스에 가두는 환경. 악재가 나와도 이상하게 안 빠지는 끈적한 날의 배경.</div>
         <div class="gauge-verdict" id="gvKR"></div>
         <div class="gauge-sub" id="gsKR"></div>
       </div>
@@ -211,16 +227,19 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
           <label for="usVix">VIX 현재값</label>
           <input type="number" id="usVix" step="0.1" placeholder="예: 22.4">
           <span class="hint">SPX 30일 내재변동성</span>
+          <details class="why"><summary>이게 뭔가</summary><p>미국판 VKOSPI. S&amp;P500 옵션들의 <b>30일치 보험료 평균</b>. 대략 13 아래 안일 / 20 넘으면 공포 / 30 넘으면 패닉권. 글로벌 위험 체온계라서 한국장도 이 체온을 따라 앓는다.</p></details>
         </div>
         <div class="field">
           <label for="usVix9">VIX9D (단기 9일물)</label>
           <input type="number" id="usVix9" step="0.1" placeholder="예: 24.1 (없으면 비움)">
           <span class="hint">VIX9D &gt; VIX = 백워데이션 = 즉각적 스트레스</span>
+          <details class="why"><summary>이게 뭔가</summary><p><b>9일짜리 단기 보험료</b>. 평소엔 짧은 보험이 긴 보험(VIX)보다 싸다 — 가까운 미래일수록 예측이 쉬우니까. 그런데 단기가 장기보다 <b>비싸지면(역전)</b> "먼 미래보다 당장 며칠이 더 무섭다"는 뜻 = 스트레스 한복판. 이 역전을 백워데이션이라 부르고, 역전이 풀리는 과정이 종종 바닥 형성과 같이 간다.</p></details>
         </div>
         <div class="field">
           <label for="usPC">CBOE Equity Put/Call</label>
           <input type="number" id="usPC" step="0.01" placeholder="예: 0.78">
           <span class="hint">통상 0.5~0.8. 1.0+ = 공포 극단권</span>
+          <details class="why"><summary>이게 뭔가</summary><p>미국 개별주 옵션에서 <b>풋(보험)과 콜(복권)이 얼마나 거래됐나</b>의 비율. 1.0을 넘으면 보험 수요가 극단 = 공포 절정 후보(역발상 관찰). 반대로 0.55 아래면 다들 복권만 산다 = 과열 고점 경계.</p></details>
         </div>
         <div class="field">
           <label for="usGex">GEX (감마 익스포저) 부호</label>
@@ -230,10 +249,12 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
             <option value="neg">음(−) — 딜러 숏감마</option>
           </select>
           <span class="hint">확인 시 체질 판정에 직결 반영</span>
+          <details class="why"><summary>이게 뭔가</summary><p>3교시에서 배운 그 표를 <b>숫자 하나로 압축한 것</b>. 딜러 진영 전체의 감마 포지션을 추정·합산한 지표다. <b>양수 = 딜러가 줄다리기 심판</b>(흡수기) / <b>음수 = 부채질꾼</b>(증폭기). 미국은 이걸 계산해주는 곳이 있어서 입력만 하면 체질 판정이 확정된다. 한국은 공식 데이터가 없어 추정만 가능.</p></details>
         </div>
         <div class="field">
           <label for="usSpx">전일 SPX 등락률 (%)</label>
           <input type="number" id="usSpx" step="0.1" placeholder="예: -1.8">
+          <details class="why"><summary>이게 뭔가</summary><p>밤사이 미국 지수가 얼마나 움직였나. <b>체질(GEX)과 교차</b>해서 읽는다 — 증폭기 환경에서의 급락은 한국 갭하락·외국인 선물 매도로 전이될 확률이 높고, 흡수기 환경의 급락은 전이 강도가 약할 수 있다.</p></details>
         </div>
       </div>
       <div class="runbar">
@@ -250,6 +271,7 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
           <div class="needle" id="needleUS"></div>
           <div class="gauge-ticks"><span>◀ 증폭기 (숏감마)</span><span>중립</span><span>흡수기 (롱감마) ▶</span></div>
         </div>
+        <div class="gauge-legend"><b>증폭기(숏감마)</b> — 딜러가 부채질꾼: 떨어지면 강제로 팔고 오르면 강제로 사서 추세에 기름을 붓는 환경. 장중 급등락이 펀더멘털이 아니라 기계가 만든 것일 수 있다.<br><b>흡수기(롱감마)</b> — 딜러가 줄다리기 심판: 한쪽으로 쏠리면 반대로 당겨서 지수를 박스에 가두는 환경. 악재가 나와도 이상하게 안 빠지는 끈적한 날의 배경.</div>
         <div class="gauge-verdict" id="gvUS"></div>
         <div class="gauge-sub" id="gsUS"></div>
       </div>
@@ -269,6 +291,26 @@ footer{margin-top:36px;text-align:center;font-size:.68rem;color:var(--dim);font-
       </div>
     </details>
   </div>
+
+  <details>
+    <summary>📖 미니사전 — 화면의 모든 용어를 수업 언어로</summary>
+    <div class="src-body">
+      <b>옵션</b> · "미래에 정해진 가격으로 사고팔 권리"가 거래되는 시장. 사과 쿠폰의 그 쿠폰<br>
+      <b>프리미엄</b> · 쿠폰 자체의 시장 가격 (1포인트 = 25만원)<br>
+      <b>풋 = 보험 / 콜 = 상승 복권</b> · 풋 수요 급증 = 큰손들이 사고를 예상하고 보험 사재기 중<br>
+      <b>내재가치</b> · 지금 당장 쿠폰 쓰면 남는 돈 (손해면 0)<br>
+      <b>시간가치</b> · "나중에 대박 날 가능성"의 값 = 프리미엄 − 내재가치<br>
+      <b>델타</b> · 쿠폰의 생존 확률 게이지 (0~1). 지수가 1 움직일 때 쿠폰값이 따라가는 비율<br>
+      <b>감마</b> · 델타가 변하는 속도. ATM + 만기 임박 = 개표 직전 초경합지 = 감마 폭발<br>
+      <b>딜러</b> · 옵션을 팔아주는 증권사 장사꾼. 방향 베팅 없이 선물로 위험을 0으로 맞춤(델타 헤지)<br>
+      <b>숏감마 = 부채질꾼</b> · 딜러가 옵션을 팔아둔 상태. 떨어지면 강제로 팔고 오르면 강제로 사서 추세 증폭<br>
+      <b>롱감마 = 줄다리기 심판</b> · 딜러가 옵션을 사둔 상태. 쏠림의 반대로 당겨 변동성 흡수<br>
+      <b>미결제약정(OI)</b> · 아직 청산 안 된 계약 잔량 = 포지션의 회계 장부<br>
+      <b>VKOSPI / VIX</b> · 보험료 평균을 지수화한 공포지수 (한국 / 미국)<br>
+      <b>백워데이션</b> · 단기 보험료가 장기보다 비싼 역전 = "당장이 무섭다" = 스트레스 한복판<br>
+      <b>GEX</b> · 딜러 진영이 부채질꾼(−)인지 심판(+)인지를 숫자 하나로 압축한 지표
+    </div>
+  </details>
 
   <footer>DERIV-READ v1.0 · 차트 기술적 지표 비사용 · 포지셔닝 회계 기반 판독 · 입력값은 저장되지 않음</footer>
 </div>
@@ -324,11 +366,14 @@ function readKR(){
   if(quad){g-=2;why.push('동시만기 주간 — 롤오버·차익청산 중첩');}
 
   const regime = g<=-3?{name:'증폭기 환경 (숏감마 추정)',col:'var(--red)',pos:12+Math.max(0,(g+6))*4,
-                  sub:'딜러 강제 매매가 추세 방향으로 작동 — 하락은 더 깊게, 반등도 더 가파르게'}
+                  sub:'딜러 강제 매매가 추세 방향으로 작동 — 하락은 더 깊게, 반등도 더 가파르게',
+                  act:'행동 가이드: 오늘의 급등락은 펀더멘털이 아니라 기계(딜러 강제매매)가 만든 오버슈팅일 수 있다. 장중 추격 매매 금지. 낙폭 과대 = 즉시 기회라는 단정도 금지 — 루프가 도는 동안은 더 갈 수 있다. 분할 원칙과 현금 버퍼 점검.'}
               : g>=2?{name:'흡수기 환경 (롱감마 추정)',col:'var(--teal)',pos:78+Math.min(2,g-2)*5,
-                  sub:'딜러가 줄다리기 심판 — 악재에도 끈적한 박스 고착 가능성'}
+                  sub:'딜러가 줄다리기 심판 — 악재에도 끈적한 박스 고착 가능성',
+                  act:'행동 가이드: 돌파·추세 베팅의 승률이 낮은 환경. 뉴스에 지수가 안 반응해도 펀더멘털 신호가 죽은 게 아니라 심판이 당기고 있는 것일 수 있다 — 종목 단위 헤게모니 스프레드 판단을 지수 체질과 분리해서 유지.'}
               : {name:'중립 · 혼조',col:'var(--txt)',pos:50+g*5,
-                  sub:'파생발 체질 신호 약함 — 펀더멘털·수급 레이어가 주도'};
+                  sub:'파생발 체질 신호 약함 — 펀더멘털·수급 레이어가 주도',
+                  act:'행동 가이드: 오늘 지수의 움직임은 파생 기계보다 실제 수급·뉴스가 주도할 가능성. 평소의 분석 체계대로 진행.'};
 
   // 공포 단계 (VKOSPI bands)
   const fs=fearStage(vk,[15,25,35,50]);
@@ -359,7 +404,8 @@ function readKR(){
     if(idx<0&&vkChg<0) rep+='지수 하락에도 VKOSPI가 내렸다 — 시장이 이 하락을 두려워하지 않는다는 뜻으로, 질서 있는 조정 쪽 해석. ';
     if(idx>0&&vkChg>5) rep+='지수 상승에도 VKOSPI가 뛰었다 — 반등을 못 믿는 시장. 보험을 들고 오르는 불안한 랠리. ';
   }
-  if(coh) rep+=`외국인 행동 판정: <b>${coh.v}</b>.`;
+  if(coh) rep+=`외국인 행동 판정: <b>${coh.v}</b>. `;
+  if(regime.act) rep+='<br><br>⟶ '+regime.act;
   document.getElementById('repKR').innerHTML=rep;
 
   document.getElementById('gvKR').textContent=regime.name;
@@ -392,10 +438,13 @@ function readUS(){
   if(gex==='pos'){g=4;why.unshift('GEX 양수 확인 — 딜러 롱감마 확정');}
 
   const regime = g<=-2?{name:'증폭기 환경 (숏감마)',col:'var(--red)',pos:14,
-                  sub:'추세 폭주 체질 — 야간 급락 시 한국장 갭·외국인 선물 매도 전이 경계'}
+                  sub:'추세 폭주 체질 — 야간 급락 시 한국장 갭·외국인 선물 매도 전이 경계',
+                  act:'행동 가이드: 한국장 시초가 부근의 급변은 미국 기계의 메아리일 수 있다. 시초가 추격 금지, 위클리 만기 근접 여부를 한국 탭에서 교차 확인.'}
               : g>=2?{name:'흡수기 환경 (롱감마)',col:'var(--teal)',pos:84,
-                  sub:'박스 고착 체질 — 악재 흡수력 있음, 끈적한 장세'}
-              : {name:'중립 · 혼조',col:'var(--txt)',pos:50+g*6,sub:'체질 신호 약함'};
+                  sub:'박스 고착 체질 — 악재 흡수력 있음, 끈적한 장세',
+                  act:'행동 가이드: 미국발 충격의 전이 강도가 제한될 수 있는 환경. 한국 자체 수급(외국인 현물·옵션)이 오늘의 주 변수.'}
+              : {name:'중립 · 혼조',col:'var(--txt)',pos:50+g*6,sub:'체질 신호 약함',
+                  act:'행동 가이드: 미국 파생 신호가 약하므로 한국장은 자체 데이터로 판독.'};
 
   const fs=fearStage(vix,[13,20,30,45]);
 
@@ -413,6 +462,7 @@ function readUS(){
   if(g<=-2&&spx!=null&&spx<-1) rep+='증폭기 환경에서의 야간 급락 — 한국 갭하락 + 외국인 선물 매도 전이 가능성 높음. 장 초반 추격 매매 자제, 위클리 만기 근접 여부 교차 확인.';
   else if(g>=2) rep+='흡수기 환경 — 미국발 충격이 있어도 전이 강도는 제한적일 가능성. 한국 자체 수급(외국인 현물)이 주도 변수.';
   else rep+='체질 신호가 약하므로 한국장은 자체 변수(외국인 수급·KRX 파생 데이터)로 판독할 것.';
+  if(regime.act) rep+='<br><br>⟶ '+regime.act;
   document.getElementById('repUS').innerHTML=rep;
 
   document.getElementById('gvUS').textContent=regime.name;
