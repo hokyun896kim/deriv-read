@@ -1,14 +1,14 @@
 {
-  "updated_kst": "2026-08-07 10:34",
+  "updated_kst": "2026-08-07 17:32",
   "errors": [],
-  "vix": 15.15,
-  "vix_chg_pct": -4.17,
-  "vix9d": 12.66,
-  "vix9d_chg_pct": -24.87,
+  "vix": 15.26,
+  "vix_chg_pct": 0.73,
+  "vix9d": 16.85,
+  "vix9d_chg_pct": 20.53,
   "spx": 7709.96,
   "spx_chg_pct": -0.18,
-  "vkospi": 6246.86,
-  "vkospi_chg_pct": -0.79,
-  "k200": 975.09,
-  "k200_chg_pct": -0.8
+  "vkospi": 6258.77,
+  "vkospi_chg_pct": -0.6,
+  "k200": 974.73,
+  "k200_chg_pct": -0.83
 }
