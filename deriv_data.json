@@ -1,12 +1,12 @@
 {
-  "updated_kst": "2026-09-03 09:19",
+  "updated_kst": "2026-09-03 21:10",
   "errors": [],
-  "vix": 15.2,
-  "vix_chg_pct": -6.98,
+  "vix": 15.43,
+  "vix_chg_pct": 1.51,
   "spx": 7666.6,
   "spx_chg_pct": 0.46,
-  "vkospi": 6596.8,
-  "vkospi_chg_pct": 0.52,
-  "k200": 1038.46,
-  "k200_chg_pct": 0.67
+  "vkospi": 6579.48,
+  "vkospi_chg_pct": 0.26,
+  "k200": 1032.82,
+  "k200_chg_pct": 0.13
 }
