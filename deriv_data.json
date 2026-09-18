@@ -1,10 +1,12 @@
 {
-  "updated_kst": "2026-09-18 09:23",
+  "updated_kst": "2026-09-18 21:17",
   "errors": [
     "KR-Naver: AttributeError"
   ],
-  "vix": 15.44,
-  "vix_chg_pct": -12.82,
+  "vix": 15.42,
+  "vix_chg_pct": -0.13,
+  "vix9d": 13.39,
+  "vix9d_chg_pct": -23.05,
   "spx": 7637.76,
   "spx_chg_pct": 1.14
 }
